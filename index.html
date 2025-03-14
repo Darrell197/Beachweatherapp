@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cornwall Surf Spots - Weather & Tide Times</title>
+  <style>
+    /* General reset */
+    body, h1, p, select, iframe {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background-image: url('https://besthotelshome.com/wp-content/uploads/2020/05/Beautiful-golden-sandy-beach-at-Porthcurno-Cornwall.jpg'); /* Replace with your beach image URL */
+      background-size: cover;
+      background-position: center;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      overflow-x: hidden;
+      background-attachment: scroll; /* Fix background image to scroll naturally */
+    }
+
+    h1 {
+      font-size: 3rem;
+      color: #ffffff;
+      margin-top: 50px;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    }
+
+    .container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Makes grid responsive */
+      gap: 30px;
+      width: 90%;
+      max-width: 1200px;
+      margin-top: 30px;
+      padding: 20px;
+      justify-items: center;
+    }
+
+    .card {
+      background-color: rgba(255, 255, 255, 0.8); /* Light background for cards */
+      border-radius: 15px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+      padding: 20px;
+      text-align: center;
+      width: 100%;
+      max-width: 350px;
+      transition: transform 0.3s ease;
+      font-size: 1.2rem;
+    }
+
+    .card:hover {
+      transform: translateY(-8px);
+    }
+
+    .card h2 {
+      font-size: 1.8rem;
+      color: #0288d1;
+      margin-bottom: 15px;
+    }
+
+    .card p {
+      color: #333;
+    }
+
+    select, button {
+      padding: 12px;
+      font-size: 16px;
+      margin-top: 10px;
+      width: 80%;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      background-color: #0288d1;
+      color: white;
+      cursor: pointer;
+    }
+
+    select:focus, button:focus {
+      outline: none;
+      box-shadow: 0 0 5px rgba(0, 0, 255, 0.5);
+    }
+
+    iframe {
+      width: 100%;
+      height: 350px;
+      border-radius: 15px;
+    }
+
+    .sunrise-sunset {
+      background-color: #ffeb3b;
+      color: #f57f17;
+    }
+
+    .surf {
+      background-color: #ffe082;
+      color: #f57f17;
+    }
+
+    .weather {
+      background-color: #81d4fa;
+      color: #0277bd;
+    }
+
+    .time-date {
+      background-color: #ffeb3b;
+      color: #f57f17;
+    }
+
+    .map-container {
+      grid-column: span 2;
+      background-color: rgba(240, 240, 240, 0.9);
+      padding: 20px;
+      border-radius: 15px;
+      width: 100%;
+      max-width: 1000px;
+      margin-top: 30px;
+    }
+
+    .surf-tips {
+      background-color: #80deea;
+      color: #00838f;
+      font-size: 1.2rem;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🏄‍♂️ Cornwall Surf Spots 🌊</h1>
+
+  <div class="container">
+    <!-- Select Beach -->
+    <div class="card">
+      <h2>Select Surf Spot</h2>
+      <select id="beachSelector">
+        <option value="50.415,-5.095,Fistral Beach,Newquay">Fistral Beach, Newquay</option>
+        <option value="50.574,-4.913,Polzeath Beach">Polzeath Beach</option>
+        <option value="50.343,-5.152,Perranporth Beach">Perranporth Beach</option>
+        <option value="50.222,-5.391,Gwithian Beach">Gwithian Beach</option>
+        <option value="50.075,-5.693,Sennen Cove">Sennen Cove</option>
+      </select>
+    </div>
+
+    <!-- Weather Card -->
+    <div class="card weather">
+      <h2>Today's Weather</h2>
+      <p id="weather">Loading weather...</p>
+    </div>
+
+    <!-- Time & Date Card -->
+    <div class="card time-date">
+      <h2>Current Time & Date</h2>
+      <p id="date">Loading date...</p>
+      <p id="time">Loading time...</p>
+    </div>
+
+    <!-- Surf Rating Card -->
+    <div class="card surf">
+      <h2>Surf Rating</h2>
+      <p id="surfRating">Calculating...</p>
+    </div>
+
+    <!-- Sunrise & Sunset Card -->
+    <div class="card sunrise-sunset">
+      <h2>Sunrise & Sunset</h2>
+      <p id="sunrise">Loading sunrise...</p>
+      <p id="sunset">Loading sunset...</p>
+    </div>
+
+    <!-- New Surf Tips Card -->
+    <div class="card surf-tips">
+      <h2>Surf Tips</h2>
+      <p>🌊 Always check the tide times before heading out!</p>
+      <p>🏄‍♂️ Make sure to warm up your muscles before hitting the waves!</p>
+      <p>⚡ Look for areas with consistent waves and minimal wind.</p>
+    </div>
+  </div>
+
+  <!-- Map Location -->
+  <div class="map-container">
+    <h2>Map Location and surf spots in Cornwall</h2>
+    <iframe id="map" src="https://maps.google.com/maps?q=50.415,-5.095&z=14&output=embed"></iframe>
+  </div>
+
+  <script>
+    const apiKey = '2b929fe0-00bb-11f0-803a-0242ac130003-2b92a044-00bb-11f0-803a-0242ac130003'; // Replace with your Stormglass API Key
+
+    function fetchData(lat, lng, beachName) {
+      // Loading...
+      document.getElementById('weather').innerText = 'Loading weather...';
+      document.getElementById('sunrise').innerText = 'Loading sunrise...';
+      document.getElementById('sunset').innerText = 'Loading sunset...';
+      document.getElementById('surfRating').innerText = 'Calculating...';
+
+      // Update Google Map
+      document.getElementById('map').src = `https://maps.google.com/maps?q=${lat},${lng}&z=14&output=embed`;
+
+      // Fetch Stormglass data
+      fetch(`https://api.stormglass.io/v2/weather/point?lat=${lat}&lng=${lng}&params=airTemperature,waterTemperature,waveHeight,windSpeed,swellHeight,sunrise,sunset&source=noaa`, {
+        headers: { 'Authorization': apiKey }
+      })
+      .then(response => response.json())
+      .then(data => {
+        const weather = data.hours[0];
+
+        document.getElementById('weather').innerHTML = `
+          🌡️ Air Temp: ${weather.airTemperature.noaa}°C<br>
+          🌊 Water Temp: ${weather.waterTemperature.noaa}°C<br>
+          🌬️ Wind Speed: ${weather.windSpeed.noaa} m/s<br>
+          🌊 Wave Height: ${weather.waveHeight.noaa}m
+        `;
+
+        document.getElementById('sunrise').innerText = `🌅 Sunrise: ${weather.sunrise ? weather.sunrise : 'N/A'}`;
+        document.getElementById('sunset').innerText = `🌇 Sunset: ${weather.sunset ? weather.sunset : 'N/A'}`;
+
+        // Surf Rating Logic
+        const waveHeight = weather.waveHeight.noaa;
+        const windSpeed = weather.windSpeed.noaa;
+
+        let rating = 'Flat 💤';
+        if (waveHeight > 1 && windSpeed < 5) {
+          rating = 'Epic 🌟';
+        } else if (waveHeight > 0.5) {
+          rating = 'Good 👍';
+        } else if (waveHeight > 0.2) {
+          rating = 'Choppy 🌊';
+        }
+
+        document.getElementById('surfRating').innerText = rating;
+
+      })
+      .catch(err => {
+        console.error('Error:', err);
+        document.getElementById('weather').innerText = 'Could not load weather.';
+        document.getElementById('surfRating').innerText = 'N/A';
+      });
+    }
+
+    // Time and Date
+    function updateTimeAndDate() {
+      const now = new Date();
+      const timeString = now.toLocaleTimeString('en-GB');
+      const dateString = now.toLocaleDateString('en-GB', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+
+      document.getElementById('time').innerText = timeString;
+      document.getElementById('date').innerText = dateString;
+    }
+
+    setInterval(updateTimeAndDate, 1000);
+    updateTimeAndDate();
+
+    // On page load, fetch data for the first beach
+    window.onload = () => {
+      const selector = document.getElementById('beachSelector');
+      const [lat, lng, beachName] = selector.value.split(',');
+      fetchData(lat, lng, beachName);
+    };
+
+    // Beach selector change
+    document.getElementById('beachSelector').addEventListener('change', function() {
+      const [lat, lng, beachName] = this.value.split(',');
+      fetchData(lat, lng, beachName);
+    });
+  </script>
+
+</body>
+</html>
